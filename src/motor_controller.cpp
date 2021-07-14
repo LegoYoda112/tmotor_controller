@@ -1,5 +1,6 @@
 #include "ros/ros.h"
 #include "std_msgs/Float32MultiArray.h"
+#include "sensor_msgs/JointState.h"
 #include "std_srvs/Trigger.h"
 
 #include "tmotor_controller/MotorManager.h"
@@ -21,6 +22,7 @@ TMotorAK60_6 motor5("Ankle 2", 10);
 // Set up managers
 MotorManager manager("can0");
 
+ros::Publisher leg_1_pub;
 
 // Set postion goal subscriber
 void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
@@ -30,14 +32,23 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
     // Log the data within msg to ROS_INFO
     ROS_INFO("Setting position goal");
     
-    motor1.send_position_goal(0.0);
-    motor2.send_position_goal(0.0);
-    motor3.send_position_goal(data[0]);
-    motor4.send_position_goal(data[1]);
-    motor5.send_position_goal(data[2]);
+    motor1.send_position_goal(data[0]);
+    motor2.send_position_goal(data[1]);
+    motor3.send_position_goal(data[2]);
+    motor4.send_position_goal(data[3]);
+    motor5.send_position_goal(data[4]);
 
     // Update motor positions
     manager.read_all();
+
+    sensor_msgs::JointState joint_state;
+
+    joint_state.name.push_back(motor5.joint_name);
+    joint_state.position.push_back(motor5.position);
+    joint_state.velocity.push_back(motor5.velocity);
+    joint_state.effort.push_back(motor5.torque);
+
+    leg_1_pub.publish(joint_state);
 }
 
 // Enable motors callback
@@ -106,6 +117,9 @@ int main(int argc, char **argv)
 
     // Subscribe to the /motors/enable topic
     ros::Subscriber sub = n.subscribe("/motors/set_position_goals", 1000, setPositionGoal);
+
+    // Add publisher 
+    leg_1_pub = n.advertise<sensor_msgs::JointState>("/motors/position", 1000);
 
     // Spin the node
     ros::spin();
