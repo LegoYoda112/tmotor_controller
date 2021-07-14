@@ -107,3 +107,22 @@ void MotorManager::soft_stop_hold(){
 void MotorManager::soft_stop_dampen(){
 
 }
+
+sensor_msgs::JointState MotorManager::get_joint_states(){
+
+    sensor_msgs::JointState joint_state;
+
+    // Loop through motor vector and get states
+    for (auto it = this->motors.begin(); it != this->motors.end(); it++){
+        auto motor = *it;
+
+        joint_state.name.push_back(motor->joint_name);
+        joint_state.position.push_back(motor->position);
+        joint_state.velocity.push_back(motor->velocity);
+
+        joint_state.effort.push_back(motor->torque);
+    }
+
+    return joint_state;
+
+}

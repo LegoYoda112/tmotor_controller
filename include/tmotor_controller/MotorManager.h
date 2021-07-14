@@ -2,6 +2,8 @@
 
 #include "canbus.h"
 
+#include "sensor_msgs/JointState.h"
+
 #include <string.h>
 #include <vector>
 
@@ -39,6 +41,8 @@ class MotorManager
         void soft_stop_hold();
 
         void soft_stop_dampen();
+
+        sensor_msgs::JointState get_joint_states();
 };
 
 #endif

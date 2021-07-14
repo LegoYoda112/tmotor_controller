@@ -41,12 +41,7 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
     // Update motor positions
     manager.read_all();
 
-    sensor_msgs::JointState joint_state;
-
-    joint_state.name.push_back(motor5.joint_name);
-    joint_state.position.push_back(motor5.position);
-    joint_state.velocity.push_back(motor5.velocity);
-    joint_state.effort.push_back(motor5.torque);
+    sensor_msgs::JointState joint_state = manager.get_joint_states();
 
     leg_1_pub.publish(joint_state);
 }
