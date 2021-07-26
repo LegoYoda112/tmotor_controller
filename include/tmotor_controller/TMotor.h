@@ -42,6 +42,8 @@ class TMotor
         float kD = 0.0;
         float t_ff = 0.0;
 
+        // Other physical constants
+        float transmission_ratio = 1.0;
         float zero_offset = 0.0;
 
     public:
@@ -75,6 +77,11 @@ class TMotor
         void set_socket(int);
 
         void set_zero_offset(float);
+
+        void set_transmission_ratio(float);
+
+        // Get functions
+        float get_transmission_ratio();
 
         // Send functions
         void send_can_msg(uint8_t*);

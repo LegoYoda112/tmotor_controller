@@ -124,6 +124,20 @@ void TMotor::set_zero_offset(float zero_offset){
     this->zero_offset = zero_offset;
 }
 
+// Sets the transmission ratio (used in the ROS joint state publisher)
+void TMotor::set_transmission_ratio(float transmission_ratio){
+    this->transmission_ratio = transmission_ratio;
+}
+
+// =========== GET FUNCTIONS
+
+float TMotor::get_transmission_ratio(){
+    return this->transmission_ratio;
+}
+
+
+// =========== SEND FUNCTIONS
+
 // Send a can message to the motor
 void TMotor::send_can_msg(uint8_t* data){
     CAN_write_data(this->socket, this->can_id, data);

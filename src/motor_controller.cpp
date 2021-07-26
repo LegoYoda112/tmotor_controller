@@ -14,9 +14,9 @@
 
 // Set up motors
 TMotorAK80_80 motor1("Left_Roll", 1);
-TMotorAK10_9 motor2("Left_Foot_Pitch", 2);
-TMotorAK60_6 motor3("Left_Slide", 3);
-TMotorAK60_6 motor4("Left_Pitch", 4);
+TMotorAK10_9 motor2("Left_Pitch", 2);
+TMotorAK60_6 motor3("Left_Slide", 4);
+TMotorAK60_6 motor4("Left_Foot_Pitch", 3);
 TMotorAK60_6 motor5("Left_Foot_Roll", 10);
 
 // Set up managers
@@ -95,11 +95,13 @@ int main(int argc, char **argv)
     manager.enable_all();
     manager.home_all_individual(1.0);
 
-    motor1.set_constants(0.0, 0.0);
-    motor2.set_constants(0.0, 0.0);
-    motor3.set_constants(0.0, 0.0);
-    motor4.set_constants(0.0, 0.0);
-    motor5.set_constants(0.0, 0.0);
+    motor1.set_constants(2.0, 0.0);
+    motor2.set_constants(2.0, 0.0);
+    motor3.set_constants(5.0, 1.0);
+    motor4.set_constants(5.0, 1.0);
+    motor5.set_constants(5.0, 1.0);
+
+    motor3.set_transmission_ratio(0.03);
 
     ROS_INFO("Starting subscriber node");
 

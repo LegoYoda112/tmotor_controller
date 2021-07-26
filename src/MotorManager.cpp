@@ -132,10 +132,10 @@ sensor_msgs::JointState MotorManager::get_joint_states(){
         auto motor = *it;
 
         joint_state.name.push_back(motor->joint_name);
-        joint_state.position.push_back(motor->position);
-        joint_state.velocity.push_back(motor->velocity);
+        joint_state.position.push_back(motor->position * motor->get_transmission_ratio());
+        joint_state.velocity.push_back(motor->velocity * motor->get_transmission_ratio());
+        joint_state.effort.push_back(motor->torque / motor->get_transmission_ratio());
 
-        joint_state.effort.push_back(motor->torque);
     }
 
     return joint_state;
