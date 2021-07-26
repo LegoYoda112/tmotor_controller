@@ -5,10 +5,12 @@ void MotorManager::connect(){
     this->bus.connect();
 }
 
+// Appends motor to motor list
 void MotorManager::add_motor( TMotor *motor ) {
     this->motors.push_back(motor);
 }
 
+// Print out the list of motors
 void MotorManager::print_all_motors(){
     cout << "=== MOTORS CONNECTED ON \"" << this->bus.get_name() << "\" ==="<< endl;
 
@@ -61,11 +63,13 @@ void MotorManager::disable_all(){
     }
 }
 
+// Read the state of all the motors
 void MotorManager::read_all(){
 
     // Get number of motors
     int num_motors = this->motors.size();
 
+    // Loop through all motors
     for(int i = 0; i < num_motors; i++){
 
         int nbytes;
@@ -75,9 +79,10 @@ void MotorManager::read_all(){
             perror("Read");
         }
 
+        // Grab the CAN frame ID
         int id = frame.data[0];
 
-        // Loop through all motors and set correct based on can id
+        // Loop through all motors and set correct based on CAN ID
         for (auto it = this->motors.begin(); it != this->motors.end(); it++){
             auto motor = *it;
 
@@ -101,13 +106,23 @@ void MotorManager::home_all_individual(float speed){
 // TODO: make all motors stop and weakly hold their position
 void MotorManager::soft_stop_hold(){
 
+    // Loop through motor vector and set position goals to current position
+    for (auto it = this->motors.begin(); it != this->motors.end(); it++){
+        auto motor = *it;
+        motor->send_position_goal(motor->position);
+    }
 }
 
 // TODO: make all motors come to a stop
 void MotorManager::soft_stop_dampen(){
-
+    // Loop through motor vector and set velocity goals to 0
+    for (auto it = this->motors.begin(); it != this->motors.end(); it++){
+        auto motor = *it;
+        motor->send_velocity_goal(0.0);
+    }
 }
 
+// Returns ROS JointState messages for all motors
 sensor_msgs::JointState MotorManager::get_joint_states(){
 
     sensor_msgs::JointState joint_state;

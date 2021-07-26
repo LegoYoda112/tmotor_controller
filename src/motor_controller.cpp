@@ -13,16 +13,16 @@
 #include <string>
 
 // Set up motors
-TMotorAK80_80 motor1("Pitch", 1);
-TMotorAK10_9 motor2("Roll", 2);
-TMotorAK60_6 motor3("Slide", 3);
-TMotorAK60_6 motor4("Ankle 1", 4);
-TMotorAK60_6 motor5("Ankle 2", 10);
+TMotorAK80_80 motor1("Left_Roll", 1);
+TMotorAK10_9 motor2("Left_Foot_Pitch", 2);
+TMotorAK60_6 motor3("Left_Slide", 3);
+TMotorAK60_6 motor4("Left_Pitch", 4);
+TMotorAK60_6 motor5("Left_Foot_Roll", 10);
 
 // Set up managers
 MotorManager manager("can0");
 
-ros::Publisher leg_1_pub;
+ros::Publisher leg_1_joint_publisher;
 
 // Set postion goal subscriber
 void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
@@ -43,7 +43,9 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
 
     sensor_msgs::JointState joint_state = manager.get_joint_states();
 
-    leg_1_pub.publish(joint_state);
+    joint_state.header.stamp = ros::Time::now();
+
+    leg_1_joint_publisher.publish(joint_state);
 }
 
 // Enable motors callback
@@ -79,6 +81,7 @@ bool homeMotors(std_srvs::Trigger::Request& req,
 // Main
 int main(int argc, char **argv)
 {
+    // Adds each joint to the manager
     manager.add_motor(&motor1);
     manager.add_motor(&motor2);
     manager.add_motor(&motor3);
@@ -92,11 +95,11 @@ int main(int argc, char **argv)
     manager.enable_all();
     manager.home_all_individual(1.0);
 
-    motor1.set_constants(1.0, 0.5);
-    motor2.set_constants(1.0, 0.5);
-    motor3.set_constants(20.0, 0.5);
-    motor4.set_constants(20.0, 0.5);
-    motor5.set_constants(20.0, 0.5);
+    motor1.set_constants(0.0, 0.0);
+    motor2.set_constants(0.0, 0.0);
+    motor3.set_constants(0.0, 0.0);
+    motor4.set_constants(0.0, 0.0);
+    motor5.set_constants(0.0, 0.0);
 
     ROS_INFO("Starting subscriber node");
 
@@ -114,7 +117,7 @@ int main(int argc, char **argv)
     ros::Subscriber sub = n.subscribe("/motors/set_position_goals", 1000, setPositionGoal);
 
     // Add publisher 
-    leg_1_pub = n.advertise<sensor_msgs::JointState>("/motors/position", 1000);
+    leg_1_joint_publisher = n.advertise<sensor_msgs::JointState>("/joint_states", 1000);
 
     // Spin the node
     ros::spin();
