@@ -224,7 +224,7 @@ void TMotor::send_zero_encoder(){
 
 // Sends a position goal
 void TMotor::send_position_goal(float position, float torque_feedforward){
-    this->send_motor_cmd(position, 0.0, this->kP, this->kD, torque_feedforward);
+    this->send_motor_cmd(position + this->zero_offset, 0.0, this->kP, this->kD, torque_feedforward);
 
     // Read motor's position, velocity and torque response
     //this->read_motor_response();
