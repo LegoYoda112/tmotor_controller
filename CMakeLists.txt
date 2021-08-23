@@ -16,5 +16,11 @@ include_directories( include ${catkin_INCLUDE_DIRS} )
 
 file(GLOB SOURCES "src/*.cpp")
 
-add_executable(motor_controller ${SOURCES})
+# add_executable(testing ${SOURCES})
+
+add_executable(motor_controller src/motor_controller.cpp src/MotorManager.cpp src/TMotor.cpp src/canbus.cpp)
+# add_dependencies(motor_controller ${SOURCES})
 target_link_libraries(motor_controller ${catkin_LIBRARIES})
+
+add_executable(joystick_controller src/joystick_controller.cpp)
+target_link_libraries(joystick_controller ${catkin_LIBRARIES})

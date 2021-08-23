@@ -13,21 +13,21 @@
 #include <string>
 
 // Set up motors
-TMotorAK80_80 motor1("Left_Roll", 1);
-TMotorAK10_9 motor2("Left_Pitch", 2);
-TMotorAK60_6 motor3("Left_Slide", 4);
-TMotorAK60_6 motor4("Left_Foot_Pitch", 3);
-TMotorAK60_6 motor5("Left_Foot_Roll", 10);
+TMotorAK80_80 motor1("Right_Roll", 1);
+TMotorAK10_9 motor2("Right_Pitch", 2);
+TMotorAK60_6 motor3("Right_Slide", 3);
+TMotorAK60_6 motor4("Right_Foot_Pitch", 51);
+TMotorAK60_6 motor5("Right_Foot_Roll", 50);
 
-TMotorAK80_80 motor6("Right_Roll", 1);
-TMotorAK10_9 motor7("Right_Pitch", 2);
-TMotorAK60_6 motor8("Right_Slide", 4);
-TMotorAK60_6 motor9("Right_Foot_Pitch", 3);
-TMotorAK60_6 motor10("Right_Foot_Roll", 10);
+// TMotorAK80_80 motor6("Left_Roll", 1);
+// TMotorAK10_9 motor7("Left_Pitch", 2);
+TMotorAK60_6 motor8("Left_Slide", 13);
+// TMotorAK60_6 motor9("Left_Foot_Pitch", 3);
+// TMotorAK60_6 motor10("Left_Foot_Roll", 10);
 
 // Set up managers
-MotorManager left_leg_motors("can0");
-MotorManager right_leg_motors("can1");
+MotorManager right_leg_motors("can0");
+MotorManager left_leg_motors("can1");
 
 ros::Publisher leg_joint_publisher;
 
@@ -37,28 +37,29 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
     std::vector<float> data = msg->data;
 
     // Log the data within msg to ROS_INFO
-    ROS_INFO("Setting position goal");
+    //ROS_INFO("Setting torque goal, %f, measured torque %f", data[1], motor2.torque);
+    ROS_INFO("Motor 2 position: %f", motor2.position);
     
     // Left leg
     motor1.send_position_goal(data[0]);
     motor2.send_position_goal(data[1]);
     motor3.send_position_goal(data[2]);
-    motor4.send_position_goal(data[3]);
-    motor5.send_position_goal(data[4]);
+    //motor4.send_position_goal(data[3]);
+    //motor5.send_position_goal(data[4]);
 
     // Right leg
-    motor6.send_position_goal(data[5]);
-    motor7.send_position_goal(data[6]);
-    motor8.send_position_goal(data[7]);
-    motor9.send_position_goal(data[8]);
-    motor10.send_position_goal(data[9]);
+    //motor6.send_position_goal(data[5]);
+    //motor7.send_position_goal(data[6]);
+    motor8.send_position_goal(data[2]);
+    //motor9.send_position_goal(data[8]);
+    //motor10.send_position_goal(data[9]);
 
     // Update motor positions
-    left_leg_motors.read_all();
     right_leg_motors.read_all();
+    left_leg_motors.read_all();
 
     // Get joint states
-    sensor_msgs::JointState leg_joint_states = left_leg_motors.get_joint_states();
+    sensor_msgs::JointState leg_joint_states = right_leg_motors.get_joint_states();
     sensor_msgs::JointState right_leg_joint_states = right_leg_motors.get_joint_states();
 
     // Concatinate joint efforts
@@ -100,8 +101,8 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
 bool enableMotors(std_srvs::Trigger::Request& req,
                   std_srvs::Trigger::Response& res){
     ROS_INFO("Enable all motors");
-    left_leg_motors.enable_all();
     right_leg_motors.enable_all();
+    // right_leg_motors.enable_all();
 
     res.success = true;
     return true;
@@ -111,8 +112,8 @@ bool enableMotors(std_srvs::Trigger::Request& req,
 bool disableMotors(std_srvs::Trigger::Request& req,
                   std_srvs::Trigger::Response& res){
     ROS_INFO("Disable all motors");
-    left_leg_motors.disable_all();
-    right_leg_motors.enable_all();
+    right_leg_motors.disable_all();
+    left_leg_motors.enable_all();
 
     res.success = true;
     return true;
@@ -122,8 +123,8 @@ bool disableMotors(std_srvs::Trigger::Request& req,
 bool homeMotors(std_srvs::Trigger::Request& req,
                   std_srvs::Trigger::Response& res){
     ROS_INFO("Homing all motors");
-    left_leg_motors.home_all_individual(1.0);
     right_leg_motors.home_all_individual(1.0);
+    left_leg_motors.home_all_individual(1.0);
     
     res.success = true;
     return true;
@@ -133,45 +134,52 @@ bool homeMotors(std_srvs::Trigger::Request& req,
 int main(int argc, char **argv)
 {
     // Adds all joints to the manager
-    left_leg_motors.add_motor(&motor1);
-    left_leg_motors.add_motor(&motor2);
-    left_leg_motors.add_motor(&motor3);
-    left_leg_motors.add_motor(&motor4);
-    left_leg_motors.add_motor(&motor5);
+    right_leg_motors.add_motor(&motor1);
+    right_leg_motors.add_motor(&motor2);
+    right_leg_motors.add_motor(&motor3);
+    //right_leg_motors.add_motor(&motor4);
+    //right_leg_motors.add_motor(&motor5);
 
-    right_leg_motors.add_motor(&motor6);
-    right_leg_motors.add_motor(&motor7);
-    right_leg_motors.add_motor(&motor8);
-    right_leg_motors.add_motor(&motor9);
-    right_leg_motors.add_motor(&motor10);
+    // right_leg_motors.add_motor(&motor6);
+    // right_leg_motors.add_motor(&motor7);
+    left_leg_motors.add_motor(&motor8);
+    // right_leg_motors.add_motor(&motor9);
+    // right_leg_motors.add_motor(&motor10);
 
     // Print out motor names
-    left_leg_motors.print_all_motors();
     right_leg_motors.print_all_motors();
+    left_leg_motors.print_all_motors();
 
     // Connect to motors and run them to 0.
     ROS_INFO("Connecting to all motors");
-    left_leg_motors.connect();
-    left_leg_motors.enable_all();
-    left_leg_motors.home_all_individual(1.0);
+    right_leg_motors.connect();
+    right_leg_motors.enable_all();
+    motor1.run_to_home(0.5);
+    motor2.run_to_home(0.5);
+    motor3.run_to_home(5);
+    //motor4.run_to_home(1);
+
+    motor8.run_to_home(1);
+    // right_leg_motors.home_all_individual(0.5);
 
 
     // Set up left leg motor constants
-    motor1.set_constants(2.0, 0.0);
-    motor2.set_constants(2.0, 0.0);
-    motor3.set_constants(5.0, 1.0);
-    motor4.set_constants(5.0, 1.0);
-    motor5.set_constants(5.0, 1.0);
+    motor1.set_constants(100.0, 0.2);
+    motor2.set_constants(50.0, 0.2);
+    motor3.set_constants(5.0, 0.5);
+    //motor4.set_constants(20.0, 0.8);
+    //motor5.set_constants(20.0, 0.8);
 
-    motor3.set_transmission_ratio(0.03);
+    motor3.set_transmission_ratio(-0.013);
 
+    motor8.set_constants(0.0, 0.0);
 
     // Set up right leg motor constants
-    motor6.set_constants(2.0, 0.0);
-    motor7.set_constants(2.0, 0.0);
-    motor8.set_constants(5.0, 1.0);
-    motor9.set_constants(5.0, 1.0);
-    motor10.set_constants(5.0, 1.0);
+    // motor6.set_constants(2.0, 0.0);
+    // motor7.set_constants(2.0, 0.0);
+    // motor8.set_constants(5.0, 1.0);
+    // motor9.set_constants(5.0, 1.0);
+    // motor10.set_constants(5.0, 1.0);
 
     motor8.set_transmission_ratio(0.03);
 
@@ -186,6 +194,8 @@ int main(int argc, char **argv)
     ros::ServiceServer enableService = n.advertiseService("/motors/enable_all", enableMotors);
     ros::ServiceServer disableService = n.advertiseService("/motors/disable_all", disableMotors);
     ros::ServiceServer homeService = n.advertiseService("/motors/home_all", homeMotors);
+
+    ROS_INFO("Starting position goal");
 
     // Subscribe to the position goals topic
     ros::Subscriber sub = n.subscribe("/motors/position_goals", 1000, setPositionGoal);

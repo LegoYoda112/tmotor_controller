@@ -299,7 +299,7 @@ void TMotor::run_to_home(float speed){
         //cout << progress << endl;
         //cout << desired_position << endl;
 
-        this->send_motor_cmd(desired_position, 0.0, 50.0, 4.0, 0.0);
+        this->send_motor_cmd(desired_position, 0.0, 200.0, 0.0, 0.0);
         this->read_motor_response();
 
         //cout << this->position << endl;
