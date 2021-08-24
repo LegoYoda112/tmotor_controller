@@ -12,6 +12,8 @@
 
 #include <string>
 
+#include <math.h>
+
 // Set up motors
 TMotorAK80_80 motor1("Right_Roll", 1);
 TMotorAK10_9 motor2("Right_Pitch", 2);
@@ -32,11 +34,49 @@ MotorManager left_leg_motors("can1");
 // Joint state publisher
 ros::Publisher leg_joint_publisher;
 
+float inverse_kinematics_calc(float foot_pitch, float foot_roll, float Lx, float Ly, float Mx, float My, float Mz) {
+
+    float alpha = -foor_pitch;
+    float beta = foot_roll;
+    float L = 192.37;
+    float R = 40;
+
+    float x = Lx*cos(beta)
+    float y = Ly*cos(alpha) + Lx*sin(alpha)*sin(beta)
+    float z = Ly*sin(alpha) - Lx*cos(alpha)*sin(beta)
+
+    h1 = L^2 - (Mx-x)^2;
+    i1 = R^2;
+    j1 = (z-Mz)/(My-y);
+    l1 = (-y^2 + My^2 + h1 - i1 + Mz^2 - z^2)/ (2*My - 2*y);
+
+    A1 = j1^2 + 1;
+    B1 = 2*(l1-y)*j1 - 2*z;
+    C1 = (l1-y)^2 + z^2 - h1;
+
+    z1_L = (-B1 - sqrt(B1^2-4*A1*C1))/(2*A1);
+    y1_L = z1_L*j1 + l1;
+
+    gamma = atan((z1_L-Mz)/(y1_L-My))
+
+    return gamma
+
+}
+
 // Calculates inverse kinematics for the ankle motors
 void foot_inverse_kinematics(float *joint_1, float *joint_2, float foot_pitch, float foot_roll) {
 
-    joint_1 = foot_pitch;
-    joint_2 = foot_roll;
+    float alpha = -foor_pitch;
+    float beta = foot_roll;
+
+    float Lx = 52;
+    float Ly = 48.94
+    float Mx = 53.5;
+    float My = 60;
+    float Mz = 185;
+
+    joint1 = inverse_kinematics_calc(alpha, beta, Lx, Ly, Mx, My, Mz);
+    joint2 = inverse_kinematics_calc(alpha, beta, -Lx, Ly, -Mx, My, Mz);
 }
 
 // Set postion goal subscriber
