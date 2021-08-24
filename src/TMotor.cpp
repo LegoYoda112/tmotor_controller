@@ -129,6 +129,26 @@ void TMotor::set_transmission_ratio(float transmission_ratio){
     this->transmission_ratio = transmission_ratio;
 }
 
+void TMotor::set_position_limits(float position_min, float position_max){
+    this->MIN = position_min;
+    this->MAX = position_max;
+}
+
+void TMotor::copy_constants(TMotor *motor){
+    this->MIN = motor->MIN;
+    this->MAX = motor->MAX;
+
+    this->kP = motor->kP;
+    this->kD = motor->kD;
+}
+
+void TMotor::invert(){
+    this->MIN = -this->MAX;
+    this->MAX = -this->MIN;
+
+    this->transmission_ratio = -this->transmission_ratio;
+}
+
 // =========== GET FUNCTIONS
 
 float TMotor::get_transmission_ratio(){
@@ -224,6 +244,14 @@ void TMotor::send_zero_encoder(){
 
 // Sends a position goal
 void TMotor::send_position_goal(float position, float torque_feedforward){
+
+    // Clamp position goal
+    if ( position > this->MAX){
+        position = this->MAX;
+    }else if( position < this->MIN ){
+        position = this->MIN;
+    }
+
     this->send_motor_cmd(position + this->zero_offset, 0.0, this->kP, this->kD, torque_feedforward);
 
     // Read motor's position, velocity and torque response
@@ -283,6 +311,8 @@ void TMotor::run_to_home(float speed){
     cout << "Homing motor: " << this->joint_name << endl;
 
     float start_pos = this->position;
+
+    motor8.set_zero_offset(-2.0);
     float distance = start_pos - this->zero_offset;
 
     float seconds = abs(distance) / speed;
@@ -294,12 +324,12 @@ void TMotor::run_to_home(float speed){
     for(int i = 0; i < steps; i++){
 
         float progress = (float) i / steps;
-        float desired_position = start_pos + progress * (this->zero_offset - start_pos);
+        float desired_position = start_pos - progress * (start_pos - this->zero_offset);
 
         //cout << progress << endl;
-        //cout << desired_position << endl;
+        cout << desired_position << endl;
 
-        this->send_motor_cmd(desired_position, 0.0, 200.0, 0.0, 0.0);
+        this->send_motor_cmd(desired_position, 0.0, 200.0, 0.5, 0.0);
         this->read_motor_response();
 
         //cout << this->position << endl;
