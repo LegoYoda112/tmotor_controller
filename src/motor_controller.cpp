@@ -24,8 +24,8 @@ TMotorAK60_6 motor5("Right_Foot_Roll", 50);
 TMotorAK80_80 motor6("Left_Roll", 11);
 TMotorAK10_9 motor7("Left_Pitch", 10);
 TMotorAK60_6 motor8("Left_Slide", 13);
-TMotorAK60_6 motor9("Left_Foot_Pitch", 3); // update
-TMotorAK60_6 motor10("Left_Foot_Roll", 10); // update
+TMotorAK60_6 motor9("Left_Foot_Pitch", 41);
+TMotorAK60_6 motor10("Left_Foot_Roll", 42);
 
 // Set up managers
 MotorManager right_leg_motors("can0");
@@ -41,42 +41,42 @@ float inverse_kinematics_calc(float foot_pitch, float foot_roll, float Lx, float
     float L = 192.37;
     float R = 40;
 
-    float x = Lx*cos(beta)
-    float y = Ly*cos(alpha) + Lx*sin(alpha)*sin(beta)
-    float z = Ly*sin(alpha) - Lx*cos(alpha)*sin(beta)
+    float x = Lx*cos(beta);
+    float y = Ly*cos(alpha) + Lx*sin(alpha)*sin(beta);
+    float z = Ly*sin(alpha) - Lx*cos(alpha)*sin(beta);
 
-    h1 = L^2 - (Mx-x)^2;
-    i1 = R^2;
-    j1 = (z-Mz)/(My-y);
-    l1 = (-y^2 + My^2 + h1 - i1 + Mz^2 - z^2)/ (2*My - 2*y);
+    float h1 = L^2 - (Mx-x)^2;
+    float i1 = R^2;
+    float j1 = (z-Mz)/(My-y);
+    float l1 = (-y^2 + My^2 + h1 - i1 + Mz^2 - z^2)/ (2*My - 2*y);
 
-    A1 = j1^2 + 1;
-    B1 = 2*(l1-y)*j1 - 2*z;
-    C1 = (l1-y)^2 + z^2 - h1;
+    float A1 = j1^2 + 1;
+    float B1 = 2*(l1-y)*j1 - 2*z;
+    float C1 = (l1-y)^2 + z^2 - h1;
 
-    z1_L = (-B1 - sqrt(B1^2-4*A1*C1))/(2*A1);
-    y1_L = z1_L*j1 + l1;
+    float z1_L = (-B1 - sqrt(B1^2-4*A1*C1))/(2*A1);
+    float y1_L = z1_L*j1 + l1;
 
-    gamma = atan((z1_L-Mz)/(y1_L-My))
+    float gamma = atan((z1_L-Mz)/(y1_L-My));
 
-    return gamma
+    return gamma;
 
 }
 
 // Calculates inverse kinematics for the ankle motors
 void foot_inverse_kinematics(float *joint_1, float *joint_2, float foot_pitch, float foot_roll) {
 
-    float alpha = -foor_pitch;
+    float alpha = -foot_pitch;
     float beta = foot_roll;
 
     float Lx = 52;
-    float Ly = 48.94
+    float Ly = 48.94;
     float Mx = 53.5;
     float My = 60;
     float Mz = 185;
 
-    joint1 = inverse_kinematics_calc(alpha, beta, Lx, Ly, Mx, My, Mz);
-    joint2 = inverse_kinematics_calc(alpha, beta, -Lx, Ly, -Mx, My, Mz);
+    joint_1 = inverse_kinematics_calc(alpha, beta, Lx, Ly, Mx, My, Mz);
+    joint_2 = inverse_kinematics_calc(alpha, beta, -Lx, Ly, -Mx, My, Mz);
 }
 
 // Set postion goal subscriber
@@ -86,21 +86,28 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
 
     // Log the data within msg to ROS_INFO
     //ROS_INFO("Setting torque goal, %f, measured torque %f", data[1], motor2.torque);
-    ROS_INFO("Motor 2 position: %f", motor2.position);
     
     // Left leg
-    motor1.send_position_goal(data[0]);
-    motor2.send_position_goal(data[1]);
-    motor3.send_position_goal(data[2]);
+    motor1.send_position_goal(0.0);
+    motor2.send_position_goal(0.0);
+    //motor3.send_position_goal(0.0);
     //motor4.send_position_goal(data[3]);
     //motor5.send_position_goal(data[4]);
 
     // Right leg
-    motor6.send_position_goal(-data[0]);
-    motor7.send_position_goal(-data[1]);
-    motor8.send_position_goal(-data[2]);
-    //motor9.send_position_goal(data[8]);
-    //motor10.send_position_goal(data[9]);
+    motor6.send_position_goal(0.0);
+    motor7.send_position_goal(0.0);
+    motor8.send_position_goal(0.0);
+
+    float joint_1 = 0.0;
+    float joint_2 = 0.0;
+
+    foot_inverse_kinematics(&joint_1, &joint_2, data[0], data[1]);
+
+    ROS_INFO("joint_1: %f, joint_2: %f", joint_1, joint_2);
+
+    motor9.send_position_goal(joint_1);
+    motor10.send_position_goal(joint_2);
 
     // Update motor positions
     right_leg_motors.read_all();
@@ -184,7 +191,7 @@ int main(int argc, char **argv)
     // Adds all joints to the manager
     right_leg_motors.add_motor(&motor1);
     right_leg_motors.add_motor(&motor2);
-    right_leg_motors.add_motor(&motor3);
+    //right_leg_motors.add_motor(&motor3);
     //right_leg_motors.add_motor(&motor4);
     //right_leg_motors.add_motor(&motor5);
 
@@ -212,7 +219,7 @@ int main(int argc, char **argv)
 
     motor1.run_to_home(0.5);
     motor2.run_to_home(0.5);
-    motor3.run_to_home(5);
+    //motor3.run_to_home(5);
     //motor4.run_to_home(1);
 
     motor6.run_to_home(0.5);
@@ -225,18 +232,19 @@ int main(int argc, char **argv)
     // Set up left leg motor constants
     motor1.set_constants(100.0, 4.0);
     motor2.set_constants(100.0, 4.0);
-    motor3.set_constants(5.0, 0.5);
+    //motor3.set_constants(5.0, 0.5);
     //motor4.set_constants(20.0, 0.8);
     //motor5.set_constants(20.0, 0.8);
 
-    motor3.set_transmission_ratio(-0.013);
+    //motor3.set_transmission_ratio(-0.013);
 
     // Set up right leg motor constants
 
     motor6.copy_constants(&motor1);
     //motor6.set_constants(100.0, 0.2);
     motor7.copy_constants(&motor2);
-    motor8.copy_constants(&motor3);
+    //motor8.copy_constants(&motor3);
+    motor8.set_constants(5.0, 0.2);
     // motor10.set_constants(5.0, 1.0);
 
     motor8.set_transmission_ratio(0.013);
