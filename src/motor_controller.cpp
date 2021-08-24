@@ -45,16 +45,16 @@ float inverse_kinematics_calc(float foot_pitch, float foot_roll, float Lx, float
     float y = Ly*cos(alpha) + Lx*sin(alpha)*sin(beta);
     float z = Ly*sin(alpha) - Lx*cos(alpha)*sin(beta);
 
-    float h1 = L^2 - (Mx-x)^2;
-    float i1 = R^2;
+    float h1 = L*L - (Mx-x)*(Mx-x);
+    float i1 = R*R;
     float j1 = (z-Mz)/(My-y);
-    float l1 = (-y^2 + My^2 + h1 - i1 + Mz^2 - z^2)/ (2*My - 2*y);
+    float l1 = (-y*y + My*My + h1 - i1 + Mz*Mz - z*z)/ (2*My - 2*y);
 
-    float A1 = j1^2 + 1;
+    float A1 = j1*j1 + 1;
     float B1 = 2*(l1-y)*j1 - 2*z;
-    float C1 = (l1-y)^2 + z^2 - h1;
+    float C1 = (l1-y)*(l1-y) + z*z - h1;
 
-    float z1_L = (-B1 - sqrt(B1^2-4*A1*C1))/(2*A1);
+    float z1_L = (-B1 - sqrt(B1*B1-4*A1*C1))/(2*A1);
     float y1_L = z1_L*j1 + l1;
 
     float gamma = atan((z1_L-Mz)/(y1_L-My));
