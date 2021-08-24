@@ -32,6 +32,13 @@ MotorManager left_leg_motors("can1");
 // Joint state publisher
 ros::Publisher leg_joint_publisher;
 
+// Calculates inverse kinematics for the ankle motors
+void foot_inverse_kinematics(float *joint_1, float *joint_2, float foot_pitch, float foot_roll) {
+
+    joint_1 = foot_pitch;
+    joint_2 = foot_roll;
+}
+
 // Set postion goal subscriber
 void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
 {
