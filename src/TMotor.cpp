@@ -311,8 +311,6 @@ void TMotor::run_to_home(float speed){
     cout << "Homing motor: " << this->joint_name << endl;
 
     float start_pos = this->position;
-
-    motor8.set_zero_offset(-2.0);
     float distance = start_pos - this->zero_offset;
 
     float seconds = abs(distance) / speed;

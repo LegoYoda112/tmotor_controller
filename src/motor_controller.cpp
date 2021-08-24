@@ -215,7 +215,7 @@ int main(int argc, char **argv)
 
     motor2.set_zero_offset(-0.15);
     motor8.set_zero_offset(1.0);
-    motor8.set_position_limits(-2.0, 2,0);
+    motor8.set_position_limits(-2.0, 2.0);
 
     motor1.run_to_home(0.5);
     motor2.run_to_home(0.5);
