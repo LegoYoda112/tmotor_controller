@@ -46,6 +46,10 @@ class TMotor
         float transmission_ratio = 1.0;
         float zero_offset = 0.0;
 
+        // Joint Limits
+        float MIN = -12.5;
+        float MAX = 12.5;
+
     public:
         string joint_name = "default";
         string motor_type;
@@ -79,6 +83,12 @@ class TMotor
         void set_zero_offset(float);
 
         void set_transmission_ratio(float);
+
+        void set_position_limits(float, float);
+
+        void copy_constants(TMotor* motor);
+
+        void invert();
 
         // Get functions
         float get_transmission_ratio();
