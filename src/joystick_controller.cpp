@@ -48,18 +48,46 @@ int main(int argc, char **argv)
 
   ros::Publisher position_pub = n.advertise<std_msgs::Float32MultiArray>("/motors/position_goals", 1000);
 
-  ros::Rate loop_rate(100);
+  ros::Rate loop_rate(10);
 
   ros::Subscriber joy_sub = n.subscribe<sensor_msgs::Joy>("joy", 1000, joyCallback);
 
   disableMotors = n.serviceClient<std_srvs::Trigger>("/motors/disable_all");
 
+  int length = 61 * 61;
+  float angles[length][2];
+
+  int i = 0;
+
+  for(int pitch = -30; pitch <= 30; pitch++){
+    if(pitch % 2  == 0) {
+      for(int roll = -30; roll <= 30; roll++){
+       angles[i][0] = pitch;
+       angles[i][1] = roll;
+       i++;
+     }
+    }else{
+      for(int roll = 30; roll >= -30; roll--){
+       angles[i][0] = pitch;
+       angles[i][1] = roll;
+       i++;
+     }
+    }
+  }
+
   int count = 0;
+  i = 0;
   while (ros::ok())
   {
     std_msgs::Float32MultiArray msg;
 
-    msg.data = {joint_1, joint_2, joint_3, joint_4, joint_5};
+    float pitch = angles[i][0] * 3.1415 / 180;
+    float roll = angles[i][1] * 3.1415 / 180;
+    i++;
+
+    std::cout << "Commanded pitch: " << pitch << " commanded roll: " << roll << std::endl;
+
+    msg.data = {pitch, roll, joint_3, joint_4, joint_5};
 
     position_pub.publish(msg);
 
