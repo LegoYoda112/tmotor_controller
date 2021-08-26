@@ -105,6 +105,16 @@ void MotorManager::home_all_individual(float speed){
     }
 }
 
+// Sends a zero position to all motors
+// Note this isn't the same as homing all motors slowly
+void MotorManager::send_all_zero(){
+    for (auto it = this->motors.begin(); it != this->motors.end(); it++){
+        auto motor = *it;
+
+        motor->send_position_goal(0.0);
+    }
+}
+
 // TODO: make all motors stop and weakly hold their position
 void MotorManager::soft_stop_hold(){
 

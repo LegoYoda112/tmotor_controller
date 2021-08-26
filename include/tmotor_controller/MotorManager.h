@@ -38,6 +38,8 @@ class MotorManager
 
         void home_all_individual(float);
 
+        void send_all_zero();
+
         void soft_stop_hold();
 
         void soft_stop_dampen();

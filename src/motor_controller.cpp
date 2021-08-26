@@ -16,17 +16,17 @@
 #include <math.h>
 
 // Set up motors
-TMotorAK80_80 motor1("Right_Roll", 1);
-TMotorAK10_9 motor2("Right_Pitch", 2);
-TMotorAK60_6 motor3("Right_Slide", 3);
-TMotorAK60_6 motor4("Right_Foot_Pitch", 51);
-TMotorAK60_6 motor5("Right_Foot_Roll", 50);
+TMotorAK80_80 right_roll("Right_Roll", 1);
+TMotorAK10_9 right_pitch("Right_Pitch", 2);
+TMotorAK60_6 right_slide("Right_Slide", 3);
+TMotorAK60_6 right_inner_ankle("Right_Foot_Pitch", 50);
+TMotorAK60_6 right_outer_ankle("Right_Foot_Roll", 51);
 
-TMotorAK80_80 motor6("Left_Roll", 11);
-TMotorAK10_9 motor7("Left_Pitch", 10);
-TMotorAK60_6 motor8("Left_Slide", 13);
-TMotorAK60_6 motor9("Left_Foot_Pitch", 40);
-TMotorAK60_6 motor10("Left_Foot_Roll", 41);
+TMotorAK80_80 left_roll("Left_Roll", 11);
+TMotorAK10_9 left_pitch("Left_Pitch", 10);
+TMotorAK60_6 left_slide("Left_Slide", 13);
+TMotorAK60_6 left_inner_ankle("Left_Foot_Pitch", 40);
+TMotorAK60_6 left_outer_ankle("Left_Foot_Roll", 41);
 
 // Set up managers
 MotorManager right_leg_motors("can0");
@@ -37,9 +37,6 @@ float joint_2 = 0.0;
 
 // Joint state publisher
 ros::Publisher leg_joint_publisher;
-
-float joint_1 = 0.0;
-float joint_2 = 0.0;
 
 float inverse_kinematics_calc(float foot_pitch, float foot_roll, float Lx, float Ly, float Mx, float My, float Mz) {
 
@@ -66,10 +63,10 @@ float inverse_kinematics_calc(float foot_pitch, float foot_roll, float Lx, float
     float y_L = z_L*j1 + l1;
 
     // Check if the values are real
-    if (~isreal(z_L) || ~isreal(y1_L)){
+    if (isnan(z_L) || isnan(y_L)){
         gamma = nanf("");
     }else {
-        gamma = atan2((z1_L-Mz),(y1_L-My));
+        gamma = atan2((z_L-Mz),(y_L-My));
     }
 
     // Check if the output angle is out of range -90 < gamma < 90
@@ -104,22 +101,21 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
     
 
     // Log the data within msg to ROS_INFO
-    //ROS_INFO("Setting torque goal, %f, measured torque %f", data[1], motor2.torque);
     
-    // Left leg
-    //motor1.send_position_goal(0.0);
-    //motor2.send_position_goal(0.0);
-    //motor3.send_position_goal(0.0);
-    //motor4.send_position_goal(data[3]);
-    //motor5.send_position_goal(data[4]);
-
     // Right leg
-    //motor6.send_position_goal(0.0);
-    //motor7.send_position_goal(0.0);
-    //motor8.send_position_goal(0.0);
+    right_roll.send_position_goal(0.0);
+    right_pitch.send_position_goal(0.0);
+    right_slide.send_position_goal(0.0);
+    right_inner_ankle.send_position_goal(0.0);
+    right_outer_ankle.send_position_goal(0.0);
 
-    pitch_rad = data[0] * M_PI / 180;
-    roll_rad = data[1] * M_PI / 180
+    // Left leg
+    left_roll.send_position_goal(0.0);
+    left_pitch.send_position_goal(0.0);
+    left_slide.send_position_goal(0.0);
+
+    float pitch_rad = data[0] * M_PI / 180;
+    float roll_rad = data[1] * M_PI / 180;
 
     float new_joint_1 = 0.0;
     float new_joint_2 = 0.0;
@@ -134,8 +130,8 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
     ROS_INFO("Pitch: %f, Roll: %f", data[0], data[1]);
     ROS_INFO("joint_1: %f, joint_2: %f \n", joint_1 * M_PI / 180, joint_2 * M_PI / 180);
 
-    motor9.send_position_goal(joint_1);
-    motor10.send_position_goal(joint_2);
+    left_inner_ankle.send_position_goal(joint_1);
+    left_outer_ankle.send_position_goal(joint_2);
 
     // Update motor positions
     right_leg_motors.read_all();
@@ -217,82 +213,90 @@ bool homeMotors(std_srvs::Trigger::Request& req,
 int main(int argc, char **argv)
 {
     // Adds all joints to the manager
-    //right_leg_motors.add_motor(&motor1);
-    //right_leg_motors.add_motor(&motor2);
-    //right_leg_motors.add_motor(&motor3);
-    //right_leg_motors.add_motor(&motor4);
-    //right_leg_motors.add_motor(&motor5);
+    right_leg_motors.add_motor(&right_roll);
+    right_leg_motors.add_motor(&right_pitch);
+    right_leg_motors.add_motor(&right_slide);
+    right_leg_motors.add_motor(&right_inner_ankle);
+    right_leg_motors.add_motor(&right_outer_ankle);
 
-    left_leg_motors.add_motor(&motor6);
-    left_leg_motors.add_motor(&motor7);
-    left_leg_motors.add_motor(&motor8);
-    left_leg_motors.add_motor(&motor9);
-    left_leg_motors.add_motor(&motor10);
+    left_leg_motors.add_motor(&left_roll);
+    left_leg_motors.add_motor(&left_pitch);
+    left_leg_motors.add_motor(&left_slide);
+    left_leg_motors.add_motor(&left_inner_ankle);
+    left_leg_motors.add_motor(&left_outer_ankle);
 
     // Print out motor names
     right_leg_motors.print_all_motors();
     left_leg_motors.print_all_motors();
 
+
+    // ====================== CONNECT AND ENABLE MOTORS ======================
     // Connect to motors and run them to 0.
     ROS_INFO("Connecting to right motors");
     right_leg_motors.connect();
-
     ROS_INFO("Enabling right motors");
     right_leg_motors.enable_all();
 
     ROS_INFO("Connecting to left motors");
     left_leg_motors.connect();
+    ROS_INFO("Enabling right motors");
     left_leg_motors.enable_all();
 
-    motor2.set_zero_offset(-0.15);
-    motor8.set_zero_offset(1.0);
-    motor8.set_position_limits(-2.0, 2.0);
 
-    // motor1.run_to_home(0.5);
-    // motor2.run_to_home(0.5);
-    //motor3.run_to_home(5);
-    //motor4.run_to_home(1);
+    // ====================== SET OFFSETS AND LIMITS ======================
+    ROS_INFO("Setting up zero offsets and limits");
 
-    //motor6.run_to_home(0.5);
-    //motor7.run_to_home(0.5);
-    motor9.run_to_home(0.5);
-    motor10.run_to_home(0.5);
+    // Right Leg
+    right_pitch.set_zero_offset(-0.15);
 
-    motor9.set_zero_offset(0.5);
-    motor10.set_zero_offset(-0.5);
+    // Left Leg
+    left_slide.set_zero_offset(1.0);
+    left_slide.set_position_limits(-2.0, 2.0);
 
-    motor9.run_to_home(0.5);
-    motor10.run_to_home(0.5);
+    //motor9.set_zero_offset(0.5);
+    //motor10.set_zero_offset(-0.5);
 
-    // right_leg_motors.home_all_individual(0.5);
+    // ====================== HOME MOTORS ======================
+    ROS_INFO("Homing all motors");
+
+    // Right Leg
+    right_roll.run_to_home(0.1);
+    right_pitch.run_to_home(0.1);
+    right_slide.run_to_home(5);
+    right_inner_ankle.run_to_home(0.5);
+    right_outer_ankle.run_to_home(0.5);
+    
+
+    // Left Leg
+    left_roll.run_to_home(0.1);
+    left_pitch.run_to_home(0.1);
+    left_slide.run_to_home(5);
+    left_inner_ankle.run_to_home(0.5);
+    left_outer_ankle.run_to_home(0.5);
+
+    // ====================== SET MOTOR CONSTANTS ======================
+    ROS_INFO("Setting motor constants");
+
+    right_roll.set_constants(100.0, 4.0); // Roll
+    right_pitch.set_constants(100.0, 4.0); // Pitch
+    right_slide.set_constants(10.0, 0.5); // Slide
+    right_inner_ankle.set_constants(10.0, 0.5);
+    right_outer_ankle.set_constants(10.0, 0.5);
+
+    // Left Leg
+    left_roll.copy_constants(&right_roll); // Duplicate equivelent motor constants
+    left_pitch.copy_constants(&right_pitch);
+    left_slide.copy_constants(&right_slide);
+    left_inner_ankle.set_constants(10.0, 0.5);
+    left_outer_ankle.set_constants(10.0, 0.5);
+
+    // Send zero position goal to hold position
+    right_leg_motors.send_all_zero();
+    left_leg_motors.send_all_zero();
 
 
-    // Set up left leg motor constants
-    // motor1.set_constants(100.0, 4.0);
-    // motor2.set_constants(100.0, 4.0);
-    //motor3.set_constants(5.0, 0.5);
-    //motor4.set_constants(20.0, 0.8);
-    //motor5.set_constants(20.0, 0.8);
-
-    //motor3.set_transmission_ratio(-0.013);
-
-    // Set up right leg motor constants
-
-    //motor6.copy_constants(&motor1);
-    //motor6.set_constants(100.0, 0.2);
-    //motor7.copy_constants(&motor2);
-    //motor8.copy_constants(&motor3);
-    //motor8.set_constants(5.0, 0.2);
-    motor9.set_constants(10.0, 0.5);
-    motor10.set_constants(10.0, 0.5);
-    // motor10.set_constants(5.0, 1.0);
-
-    //motor8.set_transmission_ratio(0.013);
-
-    motor9.set_constants(10.0, 0.8);
-    motor10.set_constants(10.0, 0.8);
-
-    ROS_INFO("Starting subscriber node");
+    // ====================== START NODE ======================
+    ROS_INFO("Starting node");
 
     // Init the node
     ros::init(argc, argv, "leg_motor_controller");
