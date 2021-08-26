@@ -48,9 +48,9 @@ int main(int argc, char **argv)
 
   ros::Publisher position_pub = n.advertise<std_msgs::Float32MultiArray>("/motors/position_goals", 1000);
 
-  ros::Rate loop_rate(10);
+  ros::Rate loop_rate(8);
 
-  ros::Subscriber joy_sub = n.subscribe<sensor_msgs::Joy>("joy", 1000, joyCallback);
+  // ros::Subscriber joy_sub = n.subscribe<sensor_msgs::Joy>("joy", 1000, joyCallback);
 
   disableMotors = n.serviceClient<std_srvs::Trigger>("/motors/disable_all");
 
@@ -59,15 +59,15 @@ int main(int argc, char **argv)
 
   int i = 0;
 
-  for(int pitch = -30; pitch <= 30; pitch++){
+  for(int pitch = -20; pitch <= 20; pitch++){
     if(pitch % 2  == 0) {
-      for(int roll = -30; roll <= 30; roll++){
+      for(int roll = -20; roll <= 20; roll++){
        angles[i][0] = pitch;
        angles[i][1] = roll;
        i++;
      }
     }else{
-      for(int roll = 30; roll >= -30; roll--){
+      for(int roll = 20; roll >= -20; roll--){
        angles[i][0] = pitch;
        angles[i][1] = roll;
        i++;

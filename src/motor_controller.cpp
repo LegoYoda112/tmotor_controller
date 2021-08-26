@@ -64,14 +64,14 @@ float inverse_kinematics_calc(float foot_pitch, float foot_roll, float Lx, float
 
     // Check if the values are real
     if (isnan(z_L) || isnan(y_L)){
-        gamma = nanf("");
+        gamma = 10000;
     }else {
         gamma = atan2((z_L-Mz),(y_L-My));
     }
 
     // Check if the output angle is out of range -90 < gamma < 90
-    if (abs(gamma) > 90){
-            gamma = nanf("");
+    if (abs(gamma) > 60){
+            gamma = 10000;
     }
 
     return gamma;
@@ -98,6 +98,8 @@ void foot_inverse_kinematics(float &joint_1, float &joint_2, float foot_pitch, f
 void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
 {
     std::vector<float> data = msg->data;
+
+    ROS_INFO("Setting position");
     
 
     // Log the data within msg to ROS_INFO
@@ -124,17 +126,28 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
 
     // Safety catch to make sure we don't ask the joints
     // to go to "nan"
-    if(!isnan(new_joint_1) || !isnan(new_joint_2)){
-        joint_1 = new_joint_1;
-        joint_2 = new_joint_2;
+    // if (!isnan(new_joint_1) || !isnan(new_joint_2)) {
+    //     joint_1 = new_joint_1;
+    //     joint_2 = new_joint_2;
+    // }
+
+    // Safety catch to make sure we don't ask the joints
+    // to go to "nan"
+    if (new_joint_1 == 10000 || new_joint_2 == 10000) {
+        new_joint_1 = joint_1;
+        new_joint_2 = joint_2;
     }
 
+    // Store new joint angles as old joint angles
+    joint_1 = new_joint_1;
+    joint_2 = new_joint_2;
+
     ROS_INFO("Pitch: %f, Roll: %f", data[0], data[1]);
-    ROS_INFO("joint_1: %f, joint_2: %f \n", joint_1 * M_PI / 180, joint_2 * M_PI / 180);
+    ROS_INFO("joint_1: %f, joint_2: %f \n", new_joint_1 * M_PI / 180, new_joint_2 * M_PI / 180);
 
     // Send ankle joint goals
-    left_inner_ankle.send_position_goal(joint_1);
-    left_outer_ankle.send_position_goal(joint_2);
+    left_inner_ankle.send_position_goal(new_joint_1);
+    left_outer_ankle.send_position_goal(new_joint_2);
 
     // Update motor positions
     right_leg_motors.read_all();
@@ -302,7 +315,7 @@ int main(int argc, char **argv)
     ROS_INFO("Starting node");
 
     // Init the node
-    ros::init(argc, argv, "leg_motor_controller");
+    ros::init(argc, argv, "motor_controller");
 
     ros::NodeHandle n;
 
@@ -316,8 +329,12 @@ int main(int argc, char **argv)
     // Subscribe to the position goals topic
     ros::Subscriber sub = n.subscribe("/motors/position_goals", 1000, setPositionGoal);
 
+    ROS_INFO("Starting joint publsiher");
+
     // Add publisher 
     leg_joint_publisher = n.advertise<sensor_msgs::JointState>("/joint_states", 1000);
+
+    ROS_INFO("Add joint publsiher");
 
     // Spin the node
     ros::spin();
