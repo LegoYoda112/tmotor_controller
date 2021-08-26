@@ -42,6 +42,7 @@ float inverse_kinematics_calc(float foot_pitch, float foot_roll, float Lx, float
 
     float alpha = -foot_pitch;
     float beta = foot_roll;
+    float gamma = 0.0;
     float L = 192.37;
     float R = 40;
 
@@ -63,14 +64,14 @@ float inverse_kinematics_calc(float foot_pitch, float foot_roll, float Lx, float
 
     // Check if the values are real
     if (~isreal(z_L) || ~isreal(y1_L)){
-        gamma = NaN;
+        gamma = nanf("");
     }else {
         gamma = atan2((z1_L-Mz),(y1_L-My));
     }
 
     // Check if the output angle is out of range -90 < gamma < 90
     if (abs(gamma) > 90){
-            gamma = NaN;
+            gamma = nanf("");
     }
 
     return gamma;
