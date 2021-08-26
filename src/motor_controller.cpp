@@ -1,3 +1,4 @@
+// written by t.gotem, y.cheng, o.helander, 
 #include "ros/ros.h"
 #include "std_msgs/Float32MultiArray.h"
 #include "sensor_msgs/JointState.h"
@@ -37,22 +38,14 @@ float joint_2 = 0.0;
 // Joint state publisher
 ros::Publisher leg_joint_publisher;
 
+float joint_1 = 0.0;
+float joint_2 = 0.0;
+
 float inverse_kinematics_calc(float foot_pitch, float foot_roll, float Lx, float Ly, float Mx, float My, float Mz) {
 
-    if(foot_pitch > 3.0/6){
-        foot_pitch = 3.0/6;
-    }else if(foot_pitch < -3.0/6){
-        foot_pitch = -3.0/6;
-    }
-
-    if(foot_roll > 3.0/6){
-        foot_roll = 3.0/6;
-    }else if(foot_roll < -3.0/6){
-        foot_roll = -3.0/6;
-    }
-    
     float alpha = -foot_pitch;
     float beta = foot_roll;
+    float gamma = 0.0;
     float L = 192.37;
     float R = 40;
 
@@ -69,10 +62,20 @@ float inverse_kinematics_calc(float foot_pitch, float foot_roll, float Lx, float
     float B1 = 2*(l1-y)*j1 - 2*z;
     float C1 = (l1-y)*(l1-y) + z*z - h1;
 
-    float z1_L = (-B1 - sqrt(B1*B1-4*A1*C1))/(2*A1);
-    float y1_L = z1_L*j1 + l1;
+    float z_L = (-B1 - sqrt(B1*B1-4*A1*C1))/(2*A1);
+    float y_L = z_L*j1 + l1;
 
-    float gamma = atan((z1_L-Mz)/(y1_L-My));
+    // Check if the values are real
+    if (~isreal(z_L) || ~isreal(y1_L)){
+        gamma = nanf("");
+    }else {
+        gamma = atan2((z1_L-Mz),(y1_L-My));
+    }
+
+    // Check if the output angle is out of range -90 < gamma < 90
+    if (abs(gamma) > 90){
+            gamma = nanf("");
+    }
 
     return gamma;
 
@@ -98,37 +101,38 @@ void foot_inverse_kinematics(float &joint_1, float &joint_2, float foot_pitch, f
 void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
 {
     std::vector<float> data = msg->data;
+    
 
     // Log the data within msg to ROS_INFO
     //ROS_INFO("Setting torque goal, %f, measured torque %f", data[1], motor2.torque);
     
     // Left leg
-    motor1.send_position_goal(0.0);
-    motor2.send_position_goal(0.0);
+    //motor1.send_position_goal(0.0);
+    //motor2.send_position_goal(0.0);
     //motor3.send_position_goal(0.0);
     //motor4.send_position_goal(data[3]);
     //motor5.send_position_goal(data[4]);
 
     // Right leg
-    motor6.send_position_goal(0.0);
-    motor7.send_position_goal(0.0);
-    motor8.send_position_goal(0.0);
+    //motor6.send_position_goal(0.0);
+    //motor7.send_position_goal(0.0);
+    //motor8.send_position_goal(0.0);
+
+    pitch_rad = data[0] * M_PI / 180;
+    roll_rad = data[1] * M_PI / 180
 
     float new_joint_1 = 0.0;
     float new_joint_2 = 0.0;
 
-    foot_inverse_kinematics(new_joint_1, new_joint_2, data[1], data[2]);
+    foot_inverse_kinematics(new_joint_1, new_joint_2, pitch_rad, roll_rad);
 
-    if(!isnan(new_joint_1)){
+    if(!isnan(new_joint_1) || !isnan(new_joint_2)){
         joint_1 = new_joint_1;
-    }
-
-    if(!isnan(new_joint_2)){
         joint_2 = new_joint_2;
     }
 
-    ROS_INFO("joint_1: %f, joint_2: %f", joint_1, joint_2);
-    ROS_INFO("pitch %f, roll %f", data[1], data[2]);
+    ROS_INFO("Pitch: %f, Roll: %f", data[0], data[1]);
+    ROS_INFO("joint_1: %f, joint_2: %f \n", joint_1 * M_PI / 180, joint_2 * M_PI / 180);
 
     motor9.send_position_goal(joint_1);
     motor10.send_position_goal(joint_2);
@@ -161,7 +165,7 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
         std::make_move_iterator(right_leg_joint_states.position.begin()),
         std::make_move_iterator(right_leg_joint_states.position.end())
     );
-
+//
     // Concatinate joint names
     leg_joint_states.name.insert(
         leg_joint_states.name.end(),
@@ -213,8 +217,8 @@ bool homeMotors(std_srvs::Trigger::Request& req,
 int main(int argc, char **argv)
 {
     // Adds all joints to the manager
-    right_leg_motors.add_motor(&motor1);
-    right_leg_motors.add_motor(&motor2);
+    //right_leg_motors.add_motor(&motor1);
+    //right_leg_motors.add_motor(&motor2);
     //right_leg_motors.add_motor(&motor3);
     //right_leg_motors.add_motor(&motor4);
     //right_leg_motors.add_motor(&motor5);
@@ -244,14 +248,15 @@ int main(int argc, char **argv)
     motor8.set_zero_offset(1.0);
     motor8.set_position_limits(-2.0, 2.0);
 
-    motor1.run_to_home(0.5);
-    motor2.run_to_home(0.5);
+    // motor1.run_to_home(0.5);
+    // motor2.run_to_home(0.5);
     //motor3.run_to_home(5);
     //motor4.run_to_home(1);
 
-    motor6.run_to_home(0.5);
-    motor7.run_to_home(0.5);
-    motor8.run_to_home(5);
+    //motor6.run_to_home(0.5);
+    //motor7.run_to_home(0.5);
+    motor9.run_to_home(0.5);
+    motor10.run_to_home(0.5);
 
     motor9.set_zero_offset(0.5);
     motor10.set_zero_offset(-0.5);
@@ -263,8 +268,8 @@ int main(int argc, char **argv)
 
 
     // Set up left leg motor constants
-    motor1.set_constants(100.0, 4.0);
-    motor2.set_constants(100.0, 4.0);
+    // motor1.set_constants(100.0, 4.0);
+    // motor2.set_constants(100.0, 4.0);
     //motor3.set_constants(5.0, 0.5);
     //motor4.set_constants(20.0, 0.8);
     //motor5.set_constants(20.0, 0.8);
@@ -273,13 +278,16 @@ int main(int argc, char **argv)
 
     // Set up right leg motor constants
 
-    motor6.copy_constants(&motor1);
+    //motor6.copy_constants(&motor1);
     //motor6.set_constants(100.0, 0.2);
-    motor7.copy_constants(&motor2);
+    //motor7.copy_constants(&motor2);
     //motor8.copy_constants(&motor3);
-    motor8.set_constants(5.0, 0.2);
+    //motor8.set_constants(5.0, 0.2);
+    motor9.set_constants(10.0, 0.5);
+    motor10.set_constants(10.0, 0.5);
+    // motor10.set_constants(5.0, 1.0);
 
-    motor8.set_transmission_ratio(0.013);
+    //motor8.set_transmission_ratio(0.013);
 
     motor9.set_constants(10.0, 0.8);
     motor10.set_constants(10.0, 0.8);
