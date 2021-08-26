@@ -58,20 +58,20 @@ float inverse_kinematics_calc(float foot_pitch, float foot_roll, float Lx, float
     float B1 = 2*(l1-y)*j1 - 2*z;
     float C1 = (l1-y)*(l1-y) + z*z - h1;
 
-    float z1_L = (-B1 - sqrt(B1*B1-4*A1*C1))/(2*A1);
-    float z2_L = (-B1 + sqrt(B1*B1-4*A1*C1))/(2*A1);
-
-    // float z_L = 0.0;
-    // if (z1_L < z2_L){
-    //     z_L = z1_L;
-    // }else if (z2_L < z1_L){
-    //     z_L = z2_L;
-    // }
-    float z_L = std::min(z1_L,z2_L);
-    
+    float z_L = (-B1 - sqrt(B1*B1-4*A1*C1))/(2*A1);
     float y_L = z_L*j1 + l1;
 
-    float gamma = atan((z_L-Mz)/(y_L-My));
+    // Check if the values are real
+    if (~isreal(z_L) || ~isreal(y1_L)){
+        gamma = NaN;
+    }else {
+        gamma = atan2d((z1_L-Mz),(y1_L-My));
+    }
+
+    // Check if the output angle is out of range -90 < gamma < 90
+    if (abs(gamma) > 90){
+            gamma = NaN;
+    }
 
     return gamma;
 
