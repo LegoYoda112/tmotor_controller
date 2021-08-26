@@ -122,11 +122,8 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
 
     foot_inverse_kinematics(new_joint_1, new_joint_2, pitch_rad, roll_rad);
 
-    if(!isnan(new_joint_1)){
+    if(!isnan(new_joint_1) || !isnan(new_joint_2)){
         joint_1 = new_joint_1;
-    }
-
-    if(!isnan(new_joint_2)){
         joint_2 = new_joint_2;
     }
 
