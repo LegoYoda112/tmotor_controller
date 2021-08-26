@@ -31,6 +31,8 @@ void MotorManager::enable_all(){
     for (auto it = this->motors.begin(); it != this->motors.end(); it++){
         auto motor = *it;
 
+        // cout << motor.get_name() << " enabled" << endl;
+
         // Sets CAN socket on all motors
         motor->set_socket(this->bus.get_socket_num());
 

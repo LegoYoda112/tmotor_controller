@@ -24,19 +24,34 @@ TMotorAK60_6 motor5("Right_Foot_Roll", 50);
 TMotorAK80_80 motor6("Left_Roll", 11);
 TMotorAK10_9 motor7("Left_Pitch", 10);
 TMotorAK60_6 motor8("Left_Slide", 13);
-TMotorAK60_6 motor9("Left_Foot_Pitch", 41);
-TMotorAK60_6 motor10("Left_Foot_Roll", 42);
+TMotorAK60_6 motor9("Left_Foot_Pitch", 40);
+TMotorAK60_6 motor10("Left_Foot_Roll", 41);
 
 // Set up managers
 MotorManager right_leg_motors("can0");
 MotorManager left_leg_motors("can1");
+
+float joint_1 = 0.0;
+float joint_2 = 0.0;
 
 // Joint state publisher
 ros::Publisher leg_joint_publisher;
 
 float inverse_kinematics_calc(float foot_pitch, float foot_roll, float Lx, float Ly, float Mx, float My, float Mz) {
 
-    float alpha = -foor_pitch;
+    if(foot_pitch > 3.0/6){
+        foot_pitch = 3.0/6;
+    }else if(foot_pitch < -3.0/6){
+        foot_pitch = -3.0/6;
+    }
+
+    if(foot_roll > 3.0/6){
+        foot_roll = 3.0/6;
+    }else if(foot_roll < -3.0/6){
+        foot_roll = -3.0/6;
+    }
+    
+    float alpha = -foot_pitch;
     float beta = foot_roll;
     float L = 192.37;
     float R = 40;
@@ -64,7 +79,7 @@ float inverse_kinematics_calc(float foot_pitch, float foot_roll, float Lx, float
 }
 
 // Calculates inverse kinematics for the ankle motors
-void foot_inverse_kinematics(float *joint_1, float *joint_2, float foot_pitch, float foot_roll) {
+void foot_inverse_kinematics(float &joint_1, float &joint_2, float foot_pitch, float foot_roll) {
 
     float alpha = -foot_pitch;
     float beta = foot_roll;
@@ -99,12 +114,21 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
     motor7.send_position_goal(0.0);
     motor8.send_position_goal(0.0);
 
-    float joint_1 = 0.0;
-    float joint_2 = 0.0;
+    float new_joint_1 = 0.0;
+    float new_joint_2 = 0.0;
 
-    foot_inverse_kinematics(&joint_1, &joint_2, data[0], data[1]);
+    foot_inverse_kinematics(new_joint_1, new_joint_2, data[1], data[2]);
+
+    if(!isnan(new_joint_1)){
+        joint_1 = new_joint_1;
+    }
+
+    if(!isnan(new_joint_2)){
+        joint_2 = new_joint_2;
+    }
 
     ROS_INFO("joint_1: %f, joint_2: %f", joint_1, joint_2);
+    ROS_INFO("pitch %f, roll %f", data[1], data[2]);
 
     motor9.send_position_goal(joint_1);
     motor10.send_position_goal(joint_2);
@@ -198,18 +222,21 @@ int main(int argc, char **argv)
     left_leg_motors.add_motor(&motor6);
     left_leg_motors.add_motor(&motor7);
     left_leg_motors.add_motor(&motor8);
-    // right_leg_motors.add_motor(&motor9);
-    // right_leg_motors.add_motor(&motor10);
+    left_leg_motors.add_motor(&motor9);
+    left_leg_motors.add_motor(&motor10);
 
     // Print out motor names
     right_leg_motors.print_all_motors();
     left_leg_motors.print_all_motors();
 
     // Connect to motors and run them to 0.
-    ROS_INFO("Connecting to all motors");
+    ROS_INFO("Connecting to right motors");
     right_leg_motors.connect();
+
+    ROS_INFO("Enabling right motors");
     right_leg_motors.enable_all();
 
+    ROS_INFO("Connecting to left motors");
     left_leg_motors.connect();
     left_leg_motors.enable_all();
 
@@ -225,6 +252,12 @@ int main(int argc, char **argv)
     motor6.run_to_home(0.5);
     motor7.run_to_home(0.5);
     motor8.run_to_home(5);
+
+    motor9.set_zero_offset(0.5);
+    motor10.set_zero_offset(-0.5);
+
+    motor9.run_to_home(0.5);
+    motor10.run_to_home(0.5);
 
     // right_leg_motors.home_all_individual(0.5);
 
@@ -245,9 +278,11 @@ int main(int argc, char **argv)
     motor7.copy_constants(&motor2);
     //motor8.copy_constants(&motor3);
     motor8.set_constants(5.0, 0.2);
-    // motor10.set_constants(5.0, 1.0);
 
     motor8.set_transmission_ratio(0.013);
+
+    motor9.set_constants(10.0, 0.8);
+    motor10.set_constants(10.0, 0.8);
 
     ROS_INFO("Starting subscriber node");
 

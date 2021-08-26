@@ -19,9 +19,9 @@ void joyCallback(const sensor_msgs::Joy::ConstPtr& joy){
 
   // joint_1 = joy->axes[0];
 
-  joint_1 = joy->axes[3] / 4.0;
+  joint_1 = joy->axes[3] / 2.0;
   joint_2 = joy->axes[0] / 2.0;
-  joint_3 = joy->axes[1] * 8;
+  joint_3 = joy->axes[1] / 2.0;
 
   joint_4 = (joy->axes[3] / 2.0 + joy->axes[4] ) / 2.0;
   joint_5 = (joy->axes[3] / 2.0 - joy->axes[4] ) / 2.0;

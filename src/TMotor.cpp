@@ -181,6 +181,7 @@ void TMotor::send_motor_cmd(float p_des, float v_des, float kp, float kd, float 
 // Send the enable command
 void TMotor::send_enable(){
 
+
     // Create CAN 8 byte data
     uint8_t data[8];
 
@@ -197,9 +198,10 @@ void TMotor::send_enable(){
     // Send data
     this->send_can_msg(data);
 
-    // cout << "Sent enable" << endl;
-
     this->read_motor_response();
+
+    cout << "Sent enable: " << this->joint_name << endl;
+
 }
 
 // Send the disable command
@@ -325,7 +327,7 @@ void TMotor::run_to_home(float speed){
         float desired_position = start_pos - progress * (start_pos - this->zero_offset);
 
         //cout << progress << endl;
-        cout << desired_position << endl;
+        // cout << desired_position << endl;
 
         this->send_motor_cmd(desired_position, 0.0, 200.0, 0.5, 0.0);
         this->read_motor_response();
