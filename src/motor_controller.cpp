@@ -15,7 +15,7 @@
 
 #include <math.h>
 
-// Set up motors
+// Set up motors 
 TMotorAK80_80 right_roll("Right_Roll", 1);
 TMotorAK10_9 right_pitch("Right_Pitch", 2);
 TMotorAK60_6 right_slide("Right_Slide", 3);
