@@ -65,7 +65,7 @@ float inverse_kinematics_calc(float foot_pitch, float foot_roll, float Lx, float
     if (~isreal(z_L) || ~isreal(y1_L)){
         gamma = NaN;
     }else {
-        gamma = atan2d((z1_L-Mz),(y1_L-My));
+        gamma = atan2((z1_L-Mz),(y1_L-My));
     }
 
     // Check if the output angle is out of range -90 < gamma < 90
@@ -114,10 +114,13 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
     //motor7.send_position_goal(0.0);
     //motor8.send_position_goal(0.0);
 
+    pitch_rad = data[0] * M_PI / 180;
+    roll_rad = data[1] * M_PI / 180
+
     float new_joint_1 = 0.0;
     float new_joint_2 = 0.0;
 
-    foot_inverse_kinematics(new_joint_1, new_joint_2, data[0], data[1]);
+    foot_inverse_kinematics(new_joint_1, new_joint_2, pitch_rad, roll_rad);
 
     if(!isnan(new_joint_1)){
         joint_1 = new_joint_1;
@@ -128,7 +131,7 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
     }
 
     ROS_INFO("Pitch: %f, Roll: %f", data[0], data[1]);
-    ROS_INFO("joint_1: %f, joint_2: %f \n", joint_1, joint_2);
+    ROS_INFO("joint_1: %f, joint_2: %f \n", joint_1 * M_PI / 180, joint_2 * M_PI / 180);
 
     motor9.send_position_goal(joint_1);
     motor10.send_position_goal(joint_2);

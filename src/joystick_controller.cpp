@@ -81,8 +81,8 @@ int main(int argc, char **argv)
   {
     std_msgs::Float32MultiArray msg;
 
-    float pitch = angles[i][0] * 3.1415 / 180;
-    float roll = angles[i][1] * 3.1415 / 180;
+    float pitch = angles[i][0];
+    float roll = angles[i][1];
     i++;
 
     std::cout << "Commanded pitch: " << pitch << " commanded roll: " << roll << std::endl;
