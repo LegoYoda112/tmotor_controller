@@ -122,6 +122,8 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
 
     foot_inverse_kinematics(new_joint_1, new_joint_2, pitch_rad, roll_rad);
 
+    // Safety catch to make sure we don't ask the joints
+    // to go to "nan"
     if(!isnan(new_joint_1) || !isnan(new_joint_2)){
         joint_1 = new_joint_1;
         joint_2 = new_joint_2;
@@ -130,6 +132,7 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
     ROS_INFO("Pitch: %f, Roll: %f", data[0], data[1]);
     ROS_INFO("joint_1: %f, joint_2: %f \n", joint_1 * M_PI / 180, joint_2 * M_PI / 180);
 
+    // Send ankle joint goals
     left_inner_ankle.send_position_goal(joint_1);
     left_outer_ankle.send_position_goal(joint_2);
 
@@ -161,7 +164,7 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
         std::make_move_iterator(right_leg_joint_states.position.begin()),
         std::make_move_iterator(right_leg_joint_states.position.end())
     );
-//
+    
     // Concatinate joint names
     leg_joint_states.name.insert(
         leg_joint_states.name.end(),
@@ -176,7 +179,7 @@ void setPositionGoal(const std_msgs::Float32MultiArray::ConstPtr& msg)
     leg_joint_publisher.publish(leg_joint_states);
 }
 
-// Enable motors callback
+// ================== Enable motors callback
 bool enableMotors(std_srvs::Trigger::Request& req,
                   std_srvs::Trigger::Response& res){
     ROS_INFO("Enable all motors");
@@ -187,7 +190,7 @@ bool enableMotors(std_srvs::Trigger::Request& req,
     return true;
 }
 
-// Disable motors callback
+// ================== Disable motors callback
 bool disableMotors(std_srvs::Trigger::Request& req,
                   std_srvs::Trigger::Response& res){
     ROS_INFO("Disable all motors");
